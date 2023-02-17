@@ -1,8 +1,8 @@
-#include <studio.h>
+#include <stdio.h>
 
 /**
  *main - Write a C program that prints exactly hello,puts
- *Return: Always 0 (Success)
+ *Return: 0 if (Success)
  */
 int main(void)
 {
