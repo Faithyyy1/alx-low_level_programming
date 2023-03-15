@@ -1,5 +1,3 @@
-0x09-static_libraries Project
-
 Tasks
 A library is not a luxury but one of the necessities of life : Creating a static library containing all the functions listed below.
 Functions;
@@ -45,3 +43,4 @@ ranlib libmy.a > This converts to random library
 After creating a static library and you would want to compile for testing use:
 gcc -std=gnu89 main.c -L -lmy -o(new_file_name)
 
+Thank you
