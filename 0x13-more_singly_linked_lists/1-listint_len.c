@@ -8,8 +8,10 @@
  *
  * Description: singly linked list node structure
  */
-size_t listint_len(const listint_t *h);
+size_t listint_len(const listint_t *h)
 {
+	size_t num_of_nodes = 0;
+
 	while (h)
 	{
 		h = h->next;
