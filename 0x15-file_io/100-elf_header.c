@@ -1,72 +1,124 @@
-#include "main.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <elf.h>
 
-/**
- * error_file - checks if files can be opened.
- * @file_from: file_from.
- * @file_to: file_to.
- * @argv: arguments vector.
- * Return: no return.
- */
-void error_file(int file_from, int file_to, char *argv[])
-{
-	if (file_from == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
-		exit(98);
-	}
-	if (file_to == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
-		exit(99);
-	}
+void print_error(const char *msg);
+void print_elf_header(Elf64_Ehdr *header);
+
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        print_error("Usage: elf_header elf_filename");
+        return 1;
+    }
+
+    int fd = open(argv[1], O_RDONLY);
+    if (fd == -1) {
+        print_error("Error opening file");
+        return 98;
+    }
+
+    Elf64_Ehdr header;
+    ssize_t n = read(fd, &header, sizeof(header));
+    if (n != sizeof(header)) {
+        print_error("Error reading ELF header");
+        close(fd);
+        return 98;
+    }
+
+    print_elf_header(&header);
+
+    close(fd);
+    return 0;
 }
 
-/**
- * main - check the code for Holberton School students.
- * @argc: number of arguments.
- * @argv: arguments vector.
- * Return: Always 0.
- */
-int main(int argc, char *argv[])
-{
-	int file_from, file_to, err_close;
-	ssize_t nchars, nwr;
-	char buf[1024];
-
-	if (argc != 3)
-	{
-		dprintf(STDERR_FILENO, "%s\n", "Usage: cp file_from file_to");
-		exit(97);
-	}
-
-	file_from = open(argv[1], O_RDONLY);
-	file_to = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC | O_APPEND, 0664);
-	error_file(file_from, file_to, argv);
-
-	nchars = 1024;
-	while (nchars == 1024)
-	{
-		nchars = read(file_from, buf, 1024);
-		if (nchars == -1)
-			error_file(-1, 0, argv);
-		nwr = write(file_to, buf, nchars);
-		if (nwr == -1)
-			error_file(0, -1, argv);
-	}
-
-	err_close = close(file_from);
-	if (err_close == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", file_from);
-		exit(100);
-	}
-
-	err_close = close(file_to);
-	if (err_close == -1)
-	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", file_from);
-		exit(100);
-	}
-	return (0);
+void print_error(const char *msg) {
+    fprintf(stderr, "%s\n", msg);
 }
+
+void print_elf_header(Elf64_Ehdr *header) {
+    printf("ELF Header:\n");
+
+    // Magic
+    printf("  Magic:   ");
+    for (int i = 0; i < EI_NIDENT; i++) {
+        printf("%02x ", header->e_ident[i]);
+    }
+    printf("\n");
+
+    // Class
+    printf("  Class:                             ");
+    switch (header->e_ident[EI_CLASS]) {
+        case ELFCLASSNONE:
+            printf("none\n");
+            break;
+        case ELFCLASS32:
+            printf("ELF32\n");
+            break;
+        case ELFCLASS64:
+            printf("ELF64\n");
+            break;
+        default:
+            printf("<unknown: %x>\n", header->e_ident[EI_CLASS]);
+            break;
+    }
+
+    // Data
+    printf("  Data:                              ");
+    switch (header->e_ident[EI_DATA]) {
+        case ELFDATANONE:
+            printf("none\n");
+            break;
+        case ELFDATA2LSB:
+            printf("2's complement, little endian\n");
+            break;
+        case ELFDATA2MSB:
+            printf("2's complement, big endian\n");
+            break;
+        default:
+            printf("<unknown: %x>\n", header->e_ident[EI_DATA]);
+            break;
+    }
+
+    // Version
+    printf("  Version:                           %d", header->e_ident[EI_VERSION]);
+    switch (header->e_ident[EI_VERSION]) {
+        case EV_NONE:
+            printf(" (invalid)\n");
+            break;
+        case EV_CURRENT:
+            printf(" (current)\n");
+            break;
+        default:
+            printf("\n");
+            break;
+    }
+
+    // OS/ABI
+    printf("  OS/ABI:                            ");
+    switch (header->e_ident[EI_OSABI]) {
+        case ELFOSABI_SYSV:
+            printf("UNIX - System V\n");
+            break;
+        case ELFOSABI_HPUX:
+            printf("UNIX - HP-UX\n");
+            break;
+        case ELFOSABI_NETBSD:
+            printf("UNIX - NetBSD\n");
+            break;
+        case ELFOSABI_LINUX:
+            printf("UNIX - Linux\n");
+            break;
+        case ELFOSABI_SOLARIS:
+            printf("UNIX - Solaris\n");
+            break;
+        case ELFOSABI_IRIX:
+            printf("UNIX - IRIX\n");
+            break;
+        case ELFOSABI_FREEBSD:
+            printf("UNIX - FreeBSD\n");
+            break;
+        case
+    }
+    
