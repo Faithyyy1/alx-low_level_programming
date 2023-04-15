@@ -15,7 +15,7 @@ char *create_buffer(char *file)
 {
 	char *buffer;
 
-	buffer = malloc(sizeof(char) * 1024);
+	buffer = malloc(sizeof(char) * 2048);
 
 	if (buffer == NULL)
 	{
@@ -25,4 +25,73 @@ char *create_buffer(char *file)
 	}
 
 	return (buffer);
+}
+
+/**
+ * close_file - Closes file descriptors.
+ * @fd: The file descriptor to be closed.
+ */
+void close_file(int fd)
+{
+	int c;
+
+	c = close(fd);
+
+	if (c == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", fd);
+		exit(100);
+	}
+}
+
+/**
+ * main - Copies the contents of a file to another file.
+ * @argc: The number of arguments supplied to the program.
+ * @argv: An array of pointers to the arguments.
+ *
+ * Return: 0 on success.
+ *
+ * Description: If the argument count is incorrect - exit code 97.
+ *              If file_from does not exist or cannot be read - exit code 98.
+ *              If file_to cannot be created or written to - exit code 99.
+ *              If file_to or file_from cannot be closed - exit code 100.
+ */
+int main(int argc, char *argv[])
+{
+	int src, dest, read_size, write_size;
+	char *buffer;	
+	
+	if (argc != 3)
+	{
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
+		exit(97);
+	}
+	src = open(argv[1], O_RDONLY);
+	read_size = read(src, buffer, 2048);
+	dest = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
+
+	do {
+		if (src == -1 || read_size == -1)
+		{
+			dprintf(STDERR_FILENO,
+					"Error: Can't read from file %s\n", argv[1]);
+			free(buffer);
+			exit(98);
+		}
+		write_size = write(dest, buffer, read_size);
+		if (dest == -1 || write_size == -1)
+		{
+			dprintf(STDERR_FILENO,
+					"Error: Can't write to %s\n", argv[2]);
+			free(buffer);
+			exit(99);
+		}
+		read_size = read(src, buffer, 2048);
+		dest = open(argv[2], O_WRONLY | O_APPEND);
+
+	} while (read_size > 0);
+	free(buffer);
+	close_file(src);
+	close_file(dest);
+	return (0);
 }
